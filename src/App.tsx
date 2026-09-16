@@ -135,6 +135,7 @@ function App() {
   const [view, setView] = useState<View>('home');
   const offline = useOfflineLibrary();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const queueRef = useRef<Track[]>([]);
   const { user, state: authState, signUp, signIn, signOut } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
 
@@ -243,6 +244,26 @@ function App() {
     offline.addItem(makePodcastItem(podcast));
   }
 
+  function startPlayback(track: Track, queue: Track[]) {
+    if (!track.previewUrl) return;
+    const audio = new Audio(track.previewUrl);
+    audio.play().catch(() => setIsPlaying(false));
+    audio.onended = () => {
+      const index = queue.findIndex((item) => item.id === track.id);
+      const next = queue[index + 1];
+      if (next) {
+        startPlayback(next, queue);
+      } else {
+        setIsPlaying(false);
+        setPlayingTrack(null);
+        queueRef.current = [];
+      }
+    };
+    audioRef.current = audio;
+    setPlayingTrack(track);
+    setIsPlaying(true);
+  }
+
   function togglePlay(track: Track) {
     if (playingTrack?.id === track.id) {
       if (isPlaying) {
@@ -262,18 +283,39 @@ function App() {
     if (!track.previewUrl) {
       setPlayingTrack(track);
       setIsPlaying(false);
+      queueRef.current = [];
       return;
     }
 
-    const audio = new Audio(track.previewUrl);
-    audio.play().catch(() => setIsPlaying(false));
-    audio.onended = () => {
+    queueRef.current = [];
+    startPlayback(track, []);
+  }
+
+  function playAlbum(album: Album) {
+    const queue = (album.tracks ?? []).filter((track) => track.previewUrl);
+    const first = queue[0];
+    if (!first) {
+      if (album.tracks?.[0]) {
+        setPlayingTrack(album.tracks[0]);
+        setIsPlaying(false);
+      }
+      return;
+    }
+    if (playingTrack?.id === first.id && isPlaying) {
+      audioRef.current?.pause();
       setIsPlaying(false);
-      setPlayingTrack(null);
-    };
-    audioRef.current = audio;
-    setPlayingTrack(track);
-    setIsPlaying(true);
+      return;
+    }
+    if (playingTrack?.id === first.id && !isPlaying) {
+      audioRef.current?.play();
+      setIsPlaying(true);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    queueRef.current = queue;
+    startPlayback(first, queue);
   }
 
   useEffect(() => {
@@ -290,6 +332,7 @@ function App() {
       audioRef.current.pause();
       audioRef.current = null;
     }
+    queueRef.current = [];
     setPlayingTrack(null);
     setIsPlaying(false);
   }
@@ -299,6 +342,7 @@ function App() {
   }, [selectedAlbum]);
 
   const hasResults = activeTab === 'Albums' ? albums.length > 0 : activeTab === 'Tracks' ? tracks.length > 0 : podcasts.length > 0;
+  const albumIsPlaying = !!selectedAlbum?.tracks?.some((track) => track.id === playingTrack?.id);
 
   if (selectedAlbum) {
     return (
@@ -341,7 +385,10 @@ function App() {
                 {selectedAlbum.genre && <span>{selectedAlbum.genre}</span>}
               </div>
               <div className="hero-actions">
-                <button className="primary-button"><Play size={17} fill="currentColor" /> Play album</button>
+                <button className="primary-button" onClick={() => playAlbum(selectedAlbum)} aria-label={albumIsPlaying ? (isPlaying ? 'Pause album' : 'Resume album') : 'Play album'}>
+                  {albumIsPlaying && isPlaying ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}
+                  {albumIsPlaying ? (isPlaying ? 'Pause album' : 'Resume album') : 'Play album'}
+                </button>
                 <button className="download-button" onClick={() => void saveAlbumToLibrary(selectedAlbum)} disabled={albumSaveState === 'saving' || !selectedAlbum.tracks?.length}>
                   {albumSaveState === 'saving' ? <LoaderCircle className="spin" size={17} /> : offline.isSaved(`album:${selectedAlbum.id}`) ? <Check size={17} /> : <Download size={17} />}
                   {albumSaveState === 'saving' ? 'Saving…' : offline.isSaved(`album:${selectedAlbum.id}`) ? 'Saved offline' : 'Save offline'}
