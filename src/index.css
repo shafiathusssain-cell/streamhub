@@ -98,6 +98,9 @@ h1, h2 { font-family: 'Space Grotesk', sans-serif; }
 .auth-logout:hover { color: #e24d1a; }
 .signin-nav { display: flex; align-items: center; gap: 7px; margin-left: 10px; border: 1px solid #ffd9b3; border-radius: 11px; padding: 9px 14px; color: #ee6d16; background: #fff2e5; font-size: 12px; font-weight: 700; transition: background .2s; }
 .signin-nav:hover { background: #ffe8d4; }
+
+.app-link { display: flex; align-items: center; gap: 7px; margin-left: 10px; border: 1px solid #ffd9b3; border-radius: 11px; padding: 9px 14px; color: #ee6d16; background: #fff2e5; font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: background .2s; }
+.app-link:hover { background: #ffe8d4; }
 .auth-overlay { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 28px 16px; overflow-y: auto; background: rgba(39, 25, 12, .45); backdrop-filter: blur(4px); }
 .auth-overlay-inner { width: min(460px, 100%); }
 .auth-overlay .auth-shell { min-height: 0; padding: 0; background: transparent; display: block; }

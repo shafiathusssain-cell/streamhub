@@ -14,6 +14,7 @@ import {
   Play,
   Radio,
   Search,
+  Smartphone,
   Sparkles,
   Volume2,
   X,
@@ -430,6 +431,7 @@ function App() {
       ) : (
         <button className="signin-nav" onClick={() => setShowAuth(true)}><LogIn size={15} /> Sign in</button>
       )}
+        <a className="app-link" href="/install.html" target="_blank" rel="noopener noreferrer"><Smartphone size={15} /> Get iPhone app</a>
       </header>
 
       {view === 'downloads' ? (
