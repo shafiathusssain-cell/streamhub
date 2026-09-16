@@ -1,11 +1,10 @@
-const CACHE = 'streamhub-v1';
+const CACHE = 'streamhub-v2';
+const PRECACHE_URLS = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/icon-192x192.png', '/icon-512x512.png', '/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE).then((cache) =>
-      cache.addAll(['/', '/index.html', '/manifest.webmanifest', '/icon-192x192.png', '/icon-512x512.png'])
-    )
+    caches.open(CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
   );
 });
 
@@ -40,6 +39,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(request).then((cached) => {
       if (cached) return cached;
       return fetch(request).then((response) => {
+        if (request.url.includes('/sw.js') || url.pathname === '/sw.js') return response;
         const copy = response.clone();
         caches.open(CACHE).then((cache) => cache.put(request, copy));
         return response;
