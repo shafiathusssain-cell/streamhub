@@ -300,6 +300,74 @@ export default function DownloadsPage({ items, onRemove }: Props) {
     );
   }
 
+  function coverFor(item: OfflineItem): string {
+    if (item.image) return item.image;
+    return coverImage;
+  }
+
+  function firstPlayable(item: OfflineItem): { blobId: string; url: string; playId: string } | null {
+    if (item.kind === 'album') {
+      for (const track of item.tracks) {
+        const blobId = albumTrackBlobId(item.key, track.id);
+        if (cached.has(blobId) && track.sourceUrl) return { blobId, url: track.sourceUrl, playId: `dl-album:${item.key}` };
+      }
+      return null;
+    }
+    if (item.kind === 'track') {
+      const blobId = trackBlobId(item.key);
+      if (cached.has(blobId) && item.sourceUrl) return { blobId, url: item.sourceUrl, playId: `dl-track:${item.key}` };
+      return null;
+    }
+    const list = episodes[item.key] || [];
+    for (const ep of list) {
+      const blobId = episodeBlobId(item.key, ep.key);
+      if (cached.has(blobId) && ep.url) return { blobId, url: ep.url, playId: `dl-pod:${item.key}` };
+    }
+    return null;
+  }
+
+  function renderCoverTile(item: OfflineItem, index: number) {
+    const cover = coverFor(item);
+    const playable = firstPlayable(item);
+    const tileTitle = item.kind === 'track' ? item.title : item.title;
+    const tileSub = item.kind === 'album' ? item.artist : item.kind === 'podcast' ? (item.artist ?? 'Podcast') : item.artist;
+    const isCurrent = playing === playable?.playId && isPlaying;
+    const isBusyTile = playable === null;
+    return (
+      <article
+        className="album-card dl-cover-tile"
+        key={item.key}
+        style={{ animationDelay: `${index * 35}ms` }}
+        onClick={() => {
+          if (playable) void playTrack(playable.blobId, playable.url, playable.playId);
+        }}
+      >
+        <div className="album-cover" style={{ background: item.image?.startsWith('linear-gradient') ? item.image : 'var(--cover-bg, #f7efe4)' }}>
+          {item.image && !item.image.startsWith('linear-gradient') ? <img src={item.image} alt={`${tileTitle} cover`} /> : <Music2 size={34} />}
+          <button
+            className="cover-play"
+            aria-label={playable ? `Play ${tileTitle} offline` : `${tileTitle} not playable offline yet`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (playable) void playTrack(playable.blobId, playable.url, playable.playId);
+            }}
+          >
+            {isCurrent ? <Pause size={18} fill="currentColor" /> : playable ? <Play size={18} fill="currentColor" /> : <WifiOff size={16} />}
+          </button>
+          {isBusyTile && <span className="dl-tile-note">Tap × download an offline track</span>}
+        </div>
+        <div className="album-card-body">
+          <span className="album-type">
+            {item.kind === 'album' ? <Music2 size={12} /> : item.kind === 'track' ? <ListMusic size={12} /> : <Mic2 size={12} />}
+            {item.kind === 'album' ? 'Offline album' : item.kind === 'track' ? 'Offline track' : 'Offline podcast'}
+          </span>
+          <h2>{tileTitle}</h2>
+          <p>{tileSub}</p>
+        </div>
+      </article>
+    );
+  }
+
   function renderAlbum(album: OfflineAlbum) {
     const isExpanded = expanded.has(album.key);
     const sourceTracks = album.tracks.filter((track) => track.sourceUrl);
@@ -479,6 +547,18 @@ export default function DownloadsPage({ items, onRemove }: Props) {
               </button>
             ))}
           </nav>
+
+          {filtered.length > 0 && (
+            <section className="dl-cover-shelf" aria-label="Downloaded covers">
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow"><ListMusic size={13} /> Cover view</span>
+                  <h2>Tap a cover to play offline</h2>
+                </div>
+              </div>
+              <div className="album-grid">{filtered.map((item, index) => renderCoverTile(item, index))}</div>
+            </section>
+          )}
 
           <div className="downloads-list">
             {filtered.length === 0 ? (
