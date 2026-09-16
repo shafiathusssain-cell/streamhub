@@ -1,0 +1,2 @@
+[functions.youtube-music]
+verify_jwt = true

@@ -1,0 +1,15 @@
+{
+  "appId": "com.streamhub.music",
+  "appName": "StreamHub",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#fffdfa",
+      "androidScaleType": "CENTER_CROP"
+    }
+  }
+}
