@@ -30,6 +30,8 @@ A modern web app for searching, streaming, and saving music albums, tracks, and 
 
 ![Album Detail](public/screenshots/detail.png)
 
+![Sign In](public/screenshots/signin.png)
+
 ## Getting Started
 
 ```bash
