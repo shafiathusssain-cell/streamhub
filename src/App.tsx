@@ -81,6 +81,13 @@ type Tab = 'Albums' | 'Tracks' | 'Podcasts';
 
 type View = 'home' | 'downloads';
 
+function audioSrcFor(track: Track): string | undefined {
+  if (track.collectionUrl && /\.(mp3|ogg|m4a|mp4|aac|webm)(\?|#|$)/i.test(track.collectionUrl)) {
+    return track.collectionUrl;
+  }
+  return track.previewUrl;
+}
+
 function curatedTracksFor(id: string, title: string, artist: string, genre: string): Track[] {
   const base = ['Midnight Aura', 'Floating Signals', 'Slow Horizon', 'Glass Fog', 'Distant Lights', 'Quiet Machines', 'Paper Stars', 'Silent Bloom', 'Far Bright', 'Low Tide', 'Ember Static', 'Folded Light', 'After Rain', 'Hollow Sun', 'Tidal Memory', 'Soft Static', 'Night Ledges', 'Pale Drift', 'First Frost', 'Last Transmission', 'Blue Hours', 'Corridor Glow', 'Weightless', 'Terminal Calm', 'Twin Moons', 'Northern Vapor', 'Crystal Flare', 'Cold Bloom'];
   const tipWords = ['Haze', 'Lattice', 'Vista', 'Wavelength', 'Mirage', 'Pulse', 'Oasis', 'Cipher', 'Shade', 'Gradient'];
@@ -236,9 +243,9 @@ function App() {
   async function saveTrackToLibrary(track: Track) {
     const item = makeTrackItem(track);
     offline.addItem(item);
-    if (!track.previewUrl) return;
+    if (!audioSrcFor(track)) return;
     setDownloadingId(track.id);
-    await cacheBlob(trackBlobId(item.key), track.previewUrl);
+    await cacheBlob(trackBlobId(item.key), audioSrcFor(track) as string);
     setDownloadingId(null);
   }
 
@@ -258,8 +265,8 @@ function App() {
   }
 
   function startPlayback(track: Track, queue: Track[]) {
-    if (!track.previewUrl) return;
-    const audio = new Audio(track.previewUrl);
+    if (!audioSrcFor(track)) return;
+    const audio = new Audio(audioSrcFor(track) as string);
     audio.play().catch(() => setIsPlaying(false));
     audio.onended = () => {
       const index = queue.findIndex((item) => item.id === track.id);
@@ -293,7 +300,7 @@ function App() {
       audioRef.current.pause();
     }
 
-    if (!track.previewUrl) {
+    if (!audioSrcFor(track)) {
       setPlayingTrack(track);
       setIsPlaying(false);
       queueRef.current = [];
@@ -305,7 +312,7 @@ function App() {
   }
 
   function playAlbum(album: Album) {
-    const queue = (album.tracks ?? []).filter((track) => track.previewUrl);
+    const queue = (album.tracks ?? []).filter((track) => audioSrcFor(track));
     const first = queue[0];
     if (!first) {
       if (album.tracks?.[0]) {
