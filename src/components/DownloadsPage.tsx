@@ -170,7 +170,26 @@ export default function DownloadsPage({ items, onRemove }: Props) {
     setBusy(null);
   }
 
-  async function playTrack(blobId: string | undefined, fallbackUrl: string | undefined, id: string) {
+  function shelfQueue(item: OfflineItem): { blobId: string; url: string; playId: string }[] {
+    if (item.kind === 'album') {
+      const list: { blobId: string; url: string; playId: string }[] = [];
+      for (const track of item.tracks) {
+        const blobId = albumTrackBlobId(item.key, track.id);
+        if (cached.has(blobId) && track.sourceUrl) list.push({ blobId, url: track.sourceUrl, playId: `dl-album:${item.key}` });
+      }
+      return list;
+    }
+    if (item.kind === 'track') {
+      const blobId = trackBlobId(item.key);
+      if (cached.has(blobId) && item.sourceUrl) return [{ blobId, url: item.sourceUrl, playId: `dl-track:${item.key}` }];
+      return [];
+    }
+    return (episodes[item.key] || [])
+      .filter((ep) => cached.has(episodeBlobId(item.key, ep.key)) && ep.url)
+      .map((ep) => ({ blobId: episodeBlobId(item.key, ep.key), url: ep.url!, playId: `dl-pod:${item.key}` }));
+  }
+
+  async function playTrack(blobId: string | undefined, fallbackUrl: string | undefined, id: string, queue: { blobId: string; url: string; playId: string }[] = []) {
     if (playing === id) {
       if (isPlaying) {
         audioRef.current?.pause();
@@ -339,7 +358,7 @@ export default function DownloadsPage({ items, onRemove }: Props) {
         key={item.key}
         style={{ animationDelay: `${index * 35}ms` }}
         onClick={() => {
-          if (playable) void playTrack(playable.blobId, playable.url, playable.playId);
+          if (playable) void playTrack(playable.blobId, playable.url, playable.playId, shelfQueue(item));
         }}
       >
         <div className="album-cover" style={{ background: item.image?.startsWith('linear-gradient') ? item.image : 'var(--cover-bg, #f7efe4)' }}>
@@ -349,7 +368,7 @@ export default function DownloadsPage({ items, onRemove }: Props) {
             aria-label={playable ? `Play ${tileTitle} offline` : `${tileTitle} not playable offline yet`}
             onClick={(e) => {
               e.stopPropagation();
-              if (playable) void playTrack(playable.blobId, playable.url, playable.playId);
+              if (playable) void playTrack(playable.blobId, playable.url, playable.playId, shelfQueue(item));
             }}
           >
             {isCurrent ? <Pause size={18} fill="currentColor" /> : playable ? <Play size={18} fill="currentColor" /> : <WifiOff size={16} />}
