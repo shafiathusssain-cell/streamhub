@@ -175,7 +175,7 @@ export default function DownloadsPage({ items, onRemove }: Props) {
       const list: { blobId: string; url: string; playId: string }[] = [];
       for (const track of item.tracks) {
         const blobId = albumTrackBlobId(item.key, track.id);
-        if (cached.has(blobId) && track.sourceUrl) list.push({ blobId, url: track.sourceUrl, playId: `dl-album:${item.key}` });
+        if (cached.has(blobId) && track.sourceUrl) list.push({ blobId, url: track.sourceUrl, playId: `dl-album:${item.key}:${track.id}` });
       }
       return list;
     }
