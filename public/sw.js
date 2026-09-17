@@ -1,4 +1,4 @@
-const CACHE = 'streamhub-v2';
+const CACHE = 'streamhub-v3';
 const PRECACHE_URLS = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/icon-192x192.png', '/icon-512x512.png', '/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {

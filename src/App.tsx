@@ -81,6 +81,19 @@ type Tab = 'Albums' | 'Tracks' | 'Podcasts';
 
 type View = 'home' | 'downloads';
 
+function curatedTracksFor(id: string, title: string, artist: string, genre: string): Track[] {
+  const base = ['Midnight Aura', 'Floating Signals', 'Slow Horizon', 'Glass Fog', 'Distant Lights', 'Quiet Machines', 'Paper Stars', 'Silent Bloom', 'Far Bright', 'Low Tide', 'Ember Static', 'Folded Light', 'After Rain', 'Hollow Sun', 'Tidal Memory', 'Soft Static', 'Night Ledges', 'Pale Drift', 'First Frost', 'Last Transmission', 'Blue Hours', 'Corridor Glow', 'Weightless', 'Terminal Calm', 'Twin Moons', 'Northern Vapor', 'Crystal Flare', 'Cold Bloom'];
+  const tipWords = ['Haze', 'Lattice', 'Vista', 'Wavelength', 'Mirage', 'Pulse', 'Oasis', 'Cipher', 'Shade', 'Gradient'];
+  return Array.from({ length: 12 }, (_, i) => ({
+    id: `cur-${id}-${i}`,
+    title: `${base[(i * 3) % base.length]} ${tipWords[(i * 5) % tipWords.length]}`,
+    artist,
+    previewUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(i % 16) + 1}.mp3`,
+    duration: 9822 + ((i * 411) % 1400),
+    position: i + 1,
+  }));
+}
+
 const curatedAlbums: Album[] = [
   { id: 'local-1', title: 'Midnight Echoes', artist: 'Lunar Drift', image: 'https://images.pexels.com/photos/5764281/pexels-photo-5764281.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', publishedAt: '2024', genre: 'Ambient' },
   { id: 'local-2', title: 'Neon Highway', artist: 'The Voltage', image: 'https://images.pexels.com/photos/6842724/pexels-photo-6842724.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', publishedAt: '2023', genre: 'Synthwave' },
